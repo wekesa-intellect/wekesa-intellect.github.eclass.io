@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Mark Attendance</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Submit Attendance Code</h5>
+            </div>
+            <div class="card-body">
+                {% if require_location %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <strong>Physical Class - Location Required</strong><br>
+                    This is a physical class. You must be within {{ session.allowed_radius }} meters of the lecture hall.
+                    Please allow location access when prompted.
+                </div>
+                {% endif %}
+                
+                <form method="post" id="attendanceForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_code" class="form-label">Attendance Code</label>
+                        {{ form.code }}
+                        <small class="text-muted">Enter the 6-digit code provided by your lecturer</small>
+                    </div>
+                    
+                    {% if require_location %}
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    <button type="button" class="btn btn-info w-100 mb-2" onclick="getLocationAndSubmit()">
+                        <i class="fas fa-location-dot"></i> Verify Location & Submit
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-check-circle"></i> Submit Attendance
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">How to Mark Attendance</h6>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Get the 6-digit code from your lecturer</li>
+                    <li>Enter the code in the field above</li>
+                    {% if require_location %}
+                    <li>Allow location access when prompted</li>
+                    <li>Click "Verify Location & Submit"</li>
+                    <li>Your GPS location will be verified</li>
+                    {% else %}
+                    <li>Click "Submit Attendance"</li>
+                    {% endif %}
+                    <li>You'll receive confirmation once recorded</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        {% if session %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Session Information</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Course:</strong> {{ session.course.code }} - {{ session.course.name }}</p>
+                <p><strong>Session Type:</strong> 
+                    {% if session.session_type == 'physical' %}
+                        🏢 Physical Class
+                    {% else %}
+                        💻 Online Class
+                    {% endif %}
+                </p>
+                <p><strong>Duration:</strong> {{ session.duration_minutes }} minutes</p>
+                <p><strong>Valid Until:</strong> {{ session.start_time|add:session.duration_minutes }}</p>
+                {% if session.session_type == 'online' and session.meeting_link %}
+                <p><strong>Meeting Link:</strong> <a href="{{ session.meeting_link }}" target="_blank">{{ session.meeting_link }}</a></p>
+                {% endif %}
+                {% if session.session_type == 'physical' and session.require_location %}
+                <p><strong>Location:</strong> Within {{ session.allowed_radius }} meters of lecture hall</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if require_location %}
+<script>
+function getLocationAndSubmit() {
+    // Show loading state
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying location...';
+    btn.disabled = true;
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+                document.getElementById('attendanceForm').submit();
+            },
+            function(error) {
+                let errorMsg = '';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = 'Location access is required to mark attendance for physical classes. Please enable location services and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = 'Cannot detect your location. Please ensure GPS is enabled and you are outdoors or near a window.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = 'Location detection timed out. Please try again.';
+                        break;
+                }
+                alert('Error: ' + errorMsg);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser. Please use a modern browser like Chrome, Firefox, or Edge.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

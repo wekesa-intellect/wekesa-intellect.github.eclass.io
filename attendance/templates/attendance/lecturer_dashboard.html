@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Lecturer Dashboard</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">Active Sessions</div>
+            <div class="card-body">
+                {% for s in active_sessions %}
+                    <p><strong>{{ s.course.code }}</strong> - Code: <code>{{ s.code }}</code> 
+                    <a href="{% url 'session_detail' s.id %}" class="btn btn-sm btn-info">View</a></p>
+                {% empty %}
+                    <p>No active sessions.</p>
+                {% endfor %}
+                <a href="{% url 'create_session' %}" class="btn btn-primary">➕ New Session</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">Recent Sessions</div>
+            <div class="card-body">
+                {% for s in recent_sessions %}
+                    <p>{{ s.course.code }} - {{ s.date }} ({{ s.records.count }} marked)</p>
+                {% empty %}
+                    <p>No recent sessions.</p>
+                {% endfor %}
+                <a href="{% url 'lecturer_reports' %}" class="btn btn-warning">📊 Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Create Attendance Session</h2>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">New Attendance Session</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="sessionForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Course</label>
+                        {{ form.course }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes)</label>
+                        {{ form.duration_minutes }}
+                        <small class="text-muted">How long the attendance window should remain open</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Session Type</label>
+                        {{ form.session_type }}
+                        <small class="text-muted">
+                            <span id="typeHint"></span>
+                        </small>
+                    </div>
+                    
+                    <!-- Online Class Fields -->
+                    <div id="onlineFields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-video"></i>
+                            <strong>Online Session</strong><br>
+                            Students will only need to enter the attendance code.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Meeting Link (Optional)</label>
+                            {{ form.meeting_link }}
+                            <small class="text-muted">Share this link with students for the online class</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Physical Class Fields -->
+                    <div id="physicalFields" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-building"></i>
+                            <strong>Physical Session</strong><br>
+                            Students will need to enter the code AND verify their location.
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.require_location }}
+                            <label class="form-check-label">
+                                <strong>Require GPS Location Verification</strong>
+                            </label>
+                            <small class="text-muted d-block">Students must be within the specified radius</small>
+                        </div>
+                        
+                        <div id="locationFields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Lecture Hall Latitude</label>
+                                {{ form.latitude }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Lecture Hall Longitude</label>
+                                {{ form.longitude }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Allowed Radius (meters)</label>
+                                {{ form.allowed_radius }}
+                                <small class="text-muted">How close students need to be (typical: 50-200 meters)</small>
+                            </div>
+                            
+                            <button type="button" class="btn btn-info" onclick="getLectureLocation()">
+                                <i class="fas fa-location-dot"></i> Set Current Location
+                            </button>
+                            <div id="locationStatus" class="mt-2"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary mt-3">
+                        <i class="fas fa-qrcode"></i> Generate Code & Start
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Session Types</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>🏢 Physical Class</h6>
+                    <p>• Students must enter the attendance code<br>
+                    • GPS location is verified<br>
+                    • Must be within lecture hall radius</p>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <h6>💻 Online Class</h6>
+                    <p>• Students only need the attendance code<br>
+                    • No location verification<br>
+                    • Perfect for remote learning</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle fields based on session type
+function updateFields() {
+    const sessionType = document.getElementById('id_session_type').value;
+    const onlineFields = document.getElementById('onlineFields');
+    const physicalFields = document.getElementById('physicalFields');
+    const typeHint = document.getElementById('typeHint');
+    
+    if (sessionType === 'online') {
+        onlineFields.style.display = 'block';
+        physicalFields.style.display = 'none';
+        typeHint.innerHTML = '✅ Students will only need the attendance code. No location required.';
+    } else {
+        onlineFields.style.display = 'none';
+        physicalFields.style.display = 'block';
+        typeHint.innerHTML = '📍 Students will need the attendance code AND GPS verification.';
+    }
+}
+
+document.getElementById('id_session_type').addEventListener('change', updateFields);
+
+document.getElementById('id_require_location').addEventListener('change', function() {
+    const locationFields = document.getElementById('locationFields');
+    locationFields.style.display = this.checked ? 'block' : 'none';
+});
+
+function getLectureLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                document.getElementById('id_latitude').value = position.coords.latitude;
+                document.getElementById('id_longitude').value = position.coords.longitude;
+                document.getElementById('locationStatus').innerHTML = 
+                    '<div class="alert alert-success mt-2">' +
+                    '<i class="fas fa-check-circle"></i> ✓ Lecture hall location set!<br>' +
+                    'Latitude: ' + position.coords.latitude.toFixed(6) + '<br>' +
+                    'Longitude: ' + position.coords.longitude.toFixed(6) + '<br>' +
+                    '<strong>Students must be within ' + document.getElementById('id_allowed_radius').value + ' meters</strong>' +
+                    '</div>';
+            },
+            function(error) {
+                let errorMsg = '';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = 'Please allow location access to set the lecture hall location.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = 'Location request timed out.';
+                        break;
+                }
+                document.getElementById('locationStatus').innerHTML = 
+                    '<div class="alert alert-danger mt-2">❌ Error: ' + errorMsg + '</div>';
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+}
+
+// Initial trigger
+updateFields();
+document.getElementById('id_require_location').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

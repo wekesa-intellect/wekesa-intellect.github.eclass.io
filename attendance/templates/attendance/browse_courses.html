@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <h2>Browse Courses</h2>
+    
+    <!-- Search and Filter Bar -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <input type="text" id="courseSearch" class="form-control" placeholder="Search courses...">
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'my_courses' %}" class="btn btn-info">My Courses</a>
+        </div>
+    </div>
+    
+    <!-- Enrollment Form -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Enroll in New Course</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus"></i> Request Enrollment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Available Courses -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Available Courses</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="courseList">
+                        {% for course in available_courses %}
+                        <div class="col-md-6 mb-3 course-item">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ course.code }} - {{ course.name }}</h5>
+                                    <p class="card-text text-muted">
+                                        <small>
+                                            <i class="fas fa-chalkboard-teacher"></i> Lecturer: {{ course.lecturer.username }}<br>
+                                            <i class="fas fa-users"></i> Enrolled: {{ course.students.count }}/{% if course.capacity > 0 %}{{ course.capacity }}{% else %}∞{% endif %}<br>
+                                            {% if course.description %}
+                                            <i class="fas fa-info-circle"></i> {{ course.description|truncatewords:20 }}
+                                            {% endif %}
+                                        </small>
+                                    </p>
+                                    {% if course.prerequisites.all %}
+                                    <p class="text-warning small">
+                                        <i class="fas fa-exclamation-triangle"></i> Prerequisites: 
+                                        {% for prereq in course.prerequisites.all %}{{ prereq.code }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="course" value="{{ course.id }}">
+                                        <button type="submit" class="btn btn-sm btn-primary" 
+                                                {% if course.is_full %}disabled{% endif %}>
+                                            {% if course.auto_approve %}
+                                                <i class="fas fa-check"></i> Enroll Now
+                                            {% else %}
+                                                <i class="fas fa-paper-plane"></i> Request Enrollment
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    {% if course.is_full %}
+                                    <span class="badge bg-danger">Full</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info">No available courses at the moment.</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Requests -->
+    {% if pending_requests %}
+    <div class="card shadow mb-4">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">Pending Enrollment Requests</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr><th>Course</th><th>Requested On</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for req in pending_requests %}
+                        <tr>
+                            <td>{{ req.course.code }} - {{ req.course.name }}</td>
+                            <td>{{ req.requested_at|date:"M d, Y H:i" }}</td>
+                            <td><span class="badge bg-warning">Pending</span></td>
+                            <td><a href="{% url 'my_courses' %}" class="btn btn-sm btn-info">View Status</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Simple course search functionality
+document.getElementById('courseSearch').addEventListener('keyup', function() {
+    let searchText = this.value.toLowerCase();
+    let courseItems = document.getElementsByClassName('course-item');
+    
+    for (let item of courseItems) {
+        let title = item.querySelector('.card-title').innerText.toLowerCase();
+        if (title.includes(searchText)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}

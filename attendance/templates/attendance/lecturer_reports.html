@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2><i class="fas fa-chart-line"></i> Course Attendance Reports</h2>
+
+{% for c in report %}
+<div class="card mb-4">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <div>
+            <i class="fas fa-book"></i> {{ c.course.code }} - {{ c.course.name }} 
+            <span class="badge bg-light text-dark ms-2">Total Sessions: {{ c.total_sessions }}</span>
+        </div>
+        <div>
+            <a href="{% url 'export_course_excel' c.course.id %}" class="btn btn-sm btn-success">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </a>
+            <a href="{% url 'export_course_pdf' c.course.id %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Attended</th>
+                        <th>Total Sessions</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in c.students %}
+                    <tr class="{% if not s.compliant %}table-danger{% endif %}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ s.student.username }}</td>
+                        <td>{{ s.student.email }}</td>
+                        <td>{{ s.attended }}</td>
+                        <td>{{ c.total_sessions }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar {% if s.percent >= 80 %}bg-success{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                     ##style="width: {{ s.percent }}%">
+                                    {{ s.percent }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if s.compliant %}
+                                <span class="badge bg-success">✅ Compliant</span>
+                            {% else %}
+                                <span class="badge bg-danger">❌ Below 80%</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No courses found. You need to be assigned as a lecturer for at least one course.
+</div>
+{% endfor %}
+
+<div class="mt-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+    <a href="{% url 'create_session' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create New Session
+    </a>
+</div>
+{% endblock %}

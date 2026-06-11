@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Courses</h2>
+
+<!-- Enrolled Courses -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-graduation-cap"></i> Currently Enrolled</h5>
+    </div>
+    <div class="card-body">
+        {% if enrolled_courses %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Lecturer</th>
+                        <th>Attendance</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enrolled_courses %}
+                    <tr>
+                        <td><strong>{{ item.course.code }}</strong></td>
+                        <td>{{ item.course.name }}</td>
+                        <td>{{ item.course.lecturer.username }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar {% if item.percentage >= 80 %}bg-success{% else %}bg-danger{% endif %}" 
+                                     role="progressbar" 
+                                    ##style="width: {{ item.percentage }}%">
+                                    {{ item.percentage }}%
+                                </div>
+                            </div>
+                            <small>({{ item.attended_sessions }}/{{ item.total_sessions }} sessions)</small>
+                        </td>
+                        <td>
+                            {% if item.compliant %}
+                            <span class="badge bg-success">✅ Compliant (80%+)</span>
+                            {% else %}
+                            <span class="badge bg-danger">⚠️ Below 80%</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'mark_attendance' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-check-circle"></i> Mark Attendance
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            You are not enrolled in any courses yet. 
+            <a href="{% url 'browse_courses' %}">Browse available courses</a> to enroll.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pending Requests -->
+{% if pending_requests %}
+<div class="card shadow mb-4">
+    <div class="card-header bg-warning text-white">
+        <h5 class="mb-0"><i class="fas fa-clock"></i> Pending Enrollment Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr><th>Course</th><th>Requested On</th><th>Status</th><th>Expected Response</th></tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr>
+                        <td><strong>{{ req.course.code }}</strong> - {{ req.course.name }}</td>
+                        <td>{{ req.requested_at|date:"M d, Y H:i" }}</td>
+                        <td><span class="badge bg-warning">Pending Approval</span></td>
+                        <td>Usually within 24-48 hours</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Rejected Requests -->
+{% if rejected_requests %}
+<div class="card shadow">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="fas fa-times-circle"></i> Rejected Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr><th>Course</th><th>Requested On</th><th>Reason</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for req in rejected_requests %}
+                    <tr>
+                        <td><strong>{{ req.course.code }}</strong> - {{ req.course.name }}</td>
+                        <td>{{ req.requested_at|date:"M d, Y" }}</td>
+                        <td>{{ req.notes|default:"No reason provided" }}</td>
+                        <td><a href="{% url 'browse_courses' %}" class="btn btn-sm btn-primary">Browse Other Courses</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{% url 'browse_courses' %}" class="btn btn-primary">
+        <i class="fas fa-search"></i> Browse More Courses
+    </a>
+</div>
+{% endblock %}

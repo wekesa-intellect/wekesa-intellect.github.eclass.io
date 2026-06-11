@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Course Settings: {{ course.code }} - {{ course.name }}</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Enrollment Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3 form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="enrollment_open" 
+                               name="enrollment_open" {% if course.enrollment_open %}checked{% endif %}>
+                        <label class="form-check-label" for="enrollment_open">
+                            Allow student enrollment requests
+                        </label>
+                        <small class="text-muted d-block">When disabled, students cannot request enrollment in this course</small>
+                    </div>
+                    
+                    <div class="mb-3 form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="auto_approve" 
+                               name="auto_approve" {% if course.auto_approve %}checked{% endif %}>
+                        <label class="form-check-label" for="auto_approve">
+                            Auto-approve enrollment requests
+                        </label>
+                        <small class="text-muted d-block">When enabled, students are automatically enrolled without manual approval</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Course Capacity</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" 
+                               value="{{ course.capacity }}" min="0">
+                        <small class="text-muted">0 = unlimited capacity</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Course Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4">{{ course.description }}</textarea>
+                        <small class="text-muted">Provide a description of the course for students</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                    <a href="{% url 'manage_enrollments' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Requests
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Course Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h3>{{ course.students.count }}</h3>
+                                <p>Enrolled Students</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h3>{% if course.capacity > 0 %}{{ course.available_seats }}{% else %}∞{% endif %}</h3>
+                                <p>Available Seats</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6>Recent Enrollment Requests:</h6>
+                <div class="list-group">
+                    {% for req in course.enrollment_requests.all|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ req.student.username }}</strong>
+                                <small class="text-muted">{{ req.requested_at|date:"M d" }}</small>
+                            </div>
+                            <span class="badge {% if req.status == 'pending' %}bg-warning{% elif req.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ req.status }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No enrollment requests yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

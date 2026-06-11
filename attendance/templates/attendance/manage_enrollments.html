@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Manage Enrollment Requests</h2>
+
+<!-- Pending Requests -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-warning text-white">
+        <h5 class="mb-0"><i class="fas fa-clock"></i> Pending Requests ({{ pending_requests.count }})</h5>
+    </div>
+    <div class="card-body">
+        {% if pending_requests %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Requested On</th>
+                        <th>Student Info</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr>
+                        <td>
+                            <strong>{{ req.student.username }}</strong><br>
+                            <small class="text-muted">{{ req.student.email }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ req.course.code }}</strong><br>
+                            <small>{{ req.course.name }}</small>
+                        </td>
+                        <td>{{ req.requested_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#studentModal{{ req.id }}">
+                                <i class="fas fa-user"></i> View
+                            </button>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="request_id" value="{{ req.id }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="btn btn-sm btn-success" 
+                                        {% if req.course.is_full %}disabled{% endif %}>
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ req.id }}">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Student Info Modal -->
+                    <div class="modal fade" id="studentModal{{ req.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-info text-white">
+                                    <h5 class="modal-title">Student Information</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>Username:</strong> {{ req.student.username }}</p>
+                                    <p><strong>Email:</strong> {{ req.student.email }}</p>
+                                    <p><strong>Phone:</strong> {{ req.student.phone|default:"Not provided" }}</p>
+                                    <p><strong>Other Courses:</strong></p>
+                                    <ul>
+                                        {% for course in req.student.courses.all %}
+                                        <li>{{ course.code }} - {{ course.name }}</li>
+                                        {% empty %}
+                                        <li>No other courses</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Reject Enrollment Request</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                        <input type="hidden" name="request_id" value="{{ req.id }}">
+                                        <input type="hidden" name="action" value="reject">
+                                        <p>Reject enrollment for <strong>{{ req.student.username }}</strong> in <strong>{{ req.course.code }}</strong></p>
+                                        <div class="mb-3">
+                                            <label for="notes" class="form-label">Reason (Optional):</label>
+                                            <textarea name="notes" class="form-control" rows="3" placeholder="Explain why the request is being rejected..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">No pending enrollment requests.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Processed Requests History -->
+{% if processed_requests %}
+<div class="card shadow">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Recent Processed Requests</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Action</th>
+                        <th>Processed By</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in processed_requests %}
+                    <tr>
+                        <td>{{ req.student.username }}</td>
+                        <td>{{ req.course.code }}</td>
+                        <td>
+                            {% if req.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ req.processed_by.username }}</td>
+                        <td>{{ req.processed_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Course Settings Dropdown - Fixed Version -->
+<div class="mt-3">
+    <div class="dropdown d-inline-block">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="courseSettingsDropdown" data-bs-toggle="dropdown">
+            <i class="fas fa-cog"></i> Manage Course Settings
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="courseSettingsDropdown">
+            {% for req in pending_requests %}
+            <li>
+                <a class="dropdown-item" href="{% url 'course_settings' req.course.id %}">
+                    <i class="fas fa-chalkboard"></i> {{ req.course.code }} - {{ req.course.name }}
+                </a>
+            </li>
+            {% empty %}
+                {% for req in processed_requests|slice:":5" %}
+                <li>
+                    <a class="dropdown-item" href="{% url 'course_settings' req.course.id %}">
+                        <i class="fas fa-chalkboard"></i> {{ req.course.code }} - {{ req.course.name }}
+                    </a>
+                </li>
+                {% empty %}
+                <li><a class="dropdown-item disabled" href="#">No courses available</a></li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <!-- Quick link for first pending course -->
+    {% if pending_requests %}
+    <small class="text-muted ms-2">
+        Tip: <a href="{% url 'course_settings' pending_requests.0.course.id %}">Quick settings for {{ pending_requests.0.course.code }}</a>
+    </small>
+    {% endif %}
+</div>
+
+<!-- Back to Dashboard Button -->
+<div class="mt-2">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% endblock %}

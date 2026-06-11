@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Attendance History</h2>
+<table class="table table-striped">
+    <thead><tr><th>Course</th><th>Date</th><th>Session Code</th><th>Marked At</th></tr></thead>
+    <tbody>
+        {% for r in records %}
+        <tr>
+            <td>{{ r.session.course.code }}</td>
+            <td>{{ r.session.date }}</td>
+            <td><code>{{ r.session.code }}</code></td>
+            <td>{{ r.timestamp }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No attendance records yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'dashboard' %}" class="btn btn-secondary">Back</a>
+{% endblock %}

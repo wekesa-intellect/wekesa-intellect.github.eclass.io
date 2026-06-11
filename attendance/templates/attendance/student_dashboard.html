@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Student Dashboard</h2>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr><th>Course</th><th>Attended</th><th>Total Sessions</th><th>%</th><th>80% Rule</th></tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr class="{% if item.percent < 80 %}table-danger{% endif %}">
+                    <td>{{ item.course.code }} - {{ item.course.name }}</td>
+                    <td>{{ item.attended }}</td>
+                    <td>{{ item.total }}</td>
+                    <td>{{ item.percent }}%</td>
+                    <td>
+                        {% if item.percent >= 80 %}
+                            <span class="badge bg-success">✅ Compliant</span>
+                        {% else %}
+                            <span class="badge bg-danger">❌ Below 80%</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No courses enrolled.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{% url 'mark_attendance' %}" class="btn btn-primary"> Mark Attendance</a>
+        <a href="{% url 'student_history' %}" class="btn btn-secondary">📜 History</a>
+    </div>
+</div>
+{% endblock %}

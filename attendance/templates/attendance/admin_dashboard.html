@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Faculty Administrator Dashboard</h2>
+<div class="row">
+    <div class="col-md-3"><div class="card text-white bg-primary mb-3"><div class="card-body"><h5>Students</h5><p class="display-6">{{ total_students }}</p></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-success mb-3"><div class="card-body"><h5>Lecturers</h5><p class="display-6">{{ total_lecturers }}</p></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-info mb-3"><div class="card-body"><h5>Courses</h5><p class="display-6">{{ total_courses }}</p></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-warning mb-3"><div class="card-body"><h5>Today's Sessions</h5><p class="display-6">{{ today_sessions }}</p></div></div></div>
+</div>
+<a href="{% url 'admin_reports' %}" class="btn btn-primary">📊 Faculty Compliance Reports</a>
+<a href="/admin/" class="btn btn-secondary">🔧 Django Admin</a>
+{% endblock %}
