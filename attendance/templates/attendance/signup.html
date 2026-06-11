@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Create Account</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Your account will be <b>pending</b> until approved by an admin.
+        </p>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            {{ form.role }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            {{ form.username }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone (optional)</label>
+            {{ form.phone }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            {{ form.password1 }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm Password</label>
+            {{ form.password2 }}
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for e in form.non_field_errors %}
+                <div>{{ e }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% for field in form %}
+            {% if field.errors %}
+              <div class="alert alert-danger">{{ field.label }}: {{ field.errors }}</div>
+            {% endif %}
+          {% endfor %}
+
+          <button type="submit" class="btn btn-primary w-100">Request Account</button>
+        </form>
+
+        <hr>
+        <div class="text-center">
+          <a href="{% url 'login' %}">Back to Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
