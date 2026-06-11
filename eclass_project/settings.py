@@ -5,10 +5,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-development-2026')
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
-ALLOWED_HOSTS = [
-    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
-]
+import os
 
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.railway.app').split(',') 
+    if h.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
