@@ -63,11 +63,28 @@ def signup_view(request):
 @login_required
 def dashboard(request):
     user = request.user
+
+    # Routing priority: Admin -> Lecturer -> Student
+    if user.is_superuser or user.role == 'admin':
+        total_students = User.objects.filter(role='student').count()
+        total_lecturers = User.objects.filter(role='lecturer').count()
+        total_courses = Course.objects.count()
+        today_sessions = AttendanceSession.objects.filter(date=timezone.now().date()).count()
+        pending_users = User.objects.filter(is_active=False).order_by('-date_joined')
+        return render(request, 'attendance/admin_dashboard.html', {
+            'total_students': total_students,
+            'total_lecturers': total_lecturers,
+            'total_courses': total_courses,
+            'today_sessions': today_sessions,
+            'pending_users': pending_users,
+        })
+
     if user.role == 'lecturer':
         active = AttendanceSession.objects.filter(lecturer=user, is_active=True)
         recent = AttendanceSession.objects.filter(lecturer=user).order_by('-start_time')[:5]
         return render(request, 'attendance/lecturer_dashboard.html', {'active_sessions': active, 'recent_sessions': recent})
-    elif user.role == 'student':
+
+    if user.role == 'student':
         data = []
         for course in user.courses.all():
             total = AttendanceSession.objects.filter(course=course).count()
@@ -81,19 +98,15 @@ def dashboard(request):
                 'status': 'Compliant' if percent >= 80 else 'Below 80%',
             })
         return render(request, 'attendance/student_dashboard.html', {'data': data})
-    else:
-        total_students = User.objects.filter(role='student').count()
-        total_lecturers = User.objects.filter(role='lecturer').count()
-        total_courses = Course.objects.count()
-        today_sessions = AttendanceSession.objects.filter(date=timezone.now().date()).count()
-        pending_users = User.objects.filter(is_active=False).order_by('-date_joined')
-        return render(request, 'attendance/admin_dashboard.html', {
-            'total_students': total_students,
-            'total_lecturers': total_lecturers,
-            'total_courses': total_courses,
-            'today_sessions': today_sessions,
-            'pending_users': pending_users,
-        })
+
+    # Fallback
+    return render(request, 'attendance/admin_dashboard.html', {
+        'total_students': User.objects.filter(role='student').count(),
+        'total_lecturers': User.objects.filter(role='lecturer').count(),
+        'total_courses': Course.objects.count(),
+        'today_sessions': AttendanceSession.objects.filter(date=timezone.now().date()).count(),
+        'pending_users': User.objects.filter(is_active=False).order_by('-date_joined'),
+    })
 
 
 

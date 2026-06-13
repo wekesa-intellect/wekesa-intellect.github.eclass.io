@@ -1,0 +1,20 @@
+/* Admin page styling overrides (optional) */
+
+/* Give the admin dashboard a slightly nicer spacing */
+#admin-dashboard {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* Improve table readability */
+#admin-dashboard .table {
+  background: #fff;
+}
+
+/* Make headings consistent */
+#admin-dashboard h2 {
+  margin-bottom: 14px;
+}
+
