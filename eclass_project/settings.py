@@ -5,12 +5,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-development-2026')
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
-import os
 
 ALLOWED_HOSTS = [
-    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.railway.app').split(',') 
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
     if h.strip()
 ]
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -82,8 +82,7 @@ CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False').lower() in ('
 CSRF_COOKIE_HTTPONLY = True
 CSRF_USE_SESSIONS = False
 
-# Railway / Heroku style SSL termination
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Static/media security cookies
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() in ('1','true','yes')
